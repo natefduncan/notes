@@ -1,5 +1,6 @@
-import typing 
+import typing
 from notes import Note
+
 
 class Graph:
     def __init__(self, nodes: typing.List[Note]):

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from tokens import tokenize
 
 LINK_RE = re.compile("\[.+\]\([^\(\)]+\)")
-TAG_RE = re.compile("(#[^ \n]+)") 
+TAG_RE = re.compile("(#[^ \n]+)")
 ID_RE = re.compile("id: (.+)\n")
 PARENT_RE = re.compile("parent: \[.+\]\((.+)\)\n")
 DEFAULT_TEMPLATE = """---
@@ -27,6 +27,7 @@ parent: %parent
 ----
 %footer
 """
+
 
 @dataclass
 class Note:
@@ -51,19 +52,19 @@ class Note:
 
     def as_dot(self, orient_tag=False):
         output = ""
-        _id = "\"" + self._id.replace("-", "_") + "\""
+        _id = '"' + self._id.replace("-", "_") + '"'
         if orient_tag:
-            output += f"{_id}[label=\"{self.title}\"];\n"
+            output += f'{_id}[label="{self.title}"];\n'
             for tag in self.tags:
-                output += f"\"{tag}\"[label=\"{tag}\"];\n"
-                output += f"\"{tag}\" -> {_id};\n"
+                output += f'"{tag}"[label="{tag}"];\n'
+                output += f'"{tag}" -> {_id};\n'
             return output
         else:
             if self.parent:
-                parent_id = "\"" + self.parent._id.replace("-", "_") + "\""
-                output += f"{_id}[label=\"{self.title}\"];\n"
-                output += f"{parent_id}[label=\"{self.parent.title}\"];\n"
-                output += f"{parent_id} -> {_id};\n" 
+                parent_id = '"' + self.parent._id.replace("-", "_") + '"'
+                output += f'{_id}[label="{self.title}"];\n'
+                output += f'{parent_id}[label="{self.parent.title}"];\n'
+                output += f"{parent_id} -> {_id};\n"
                 return output
             else:
                 return None
@@ -101,7 +102,7 @@ class Note:
                 c.parent = None if not parent else parent.group(1)
             elif token.kind == "TITLE":
                 c.title = token.value.replace("# ", "").strip()
-                is_body = True 
+                is_body = True
             elif token.kind == "FOOTER_LINE":
                 is_body = False
                 is_footer = True
@@ -137,31 +138,40 @@ class Note:
         template_keys = {
             "%id": self._id,
             "%date": date,
-            "%tags": tags, 
+            "%tags": tags,
             "%parent": parent,
             "%title": self.title,
             "%body": self.body,
-            "%footer": self.footer
+            "%footer": self.footer,
         }
         output = template
         for k, r in template_keys.items():
             output = output.replace(k, r)
         return output
 
+
 def get_notes_files(folders: typing.List[str]) -> typing.List[str]:
     files = []
     for folder in folders:
-        files += [os.path.join(dirpath,f) for (dirpath, dirnames, filenames) \
-                in os.walk(folder) for f in filenames]
+        files += [
+            os.path.join(dirpath, f)
+            for (dirpath, dirnames, filenames) in os.walk(folder)
+            for f in filenames
+        ]
     files = [f for f in files if re.search(r"./\d{6}-\d{4}", f)]
     return files
 
+
 def get_template_files(path: str) -> typing.List[str]:
     files = []
-    files += [os.path.join(dirpath,f) for (dirpath, dirnames, filenames) \
-            in os.walk(path) for f in filenames]
+    files += [
+        os.path.join(dirpath, f)
+        for (dirpath, dirnames, filenames) in os.walk(path)
+        for f in filenames
+    ]
     files = [f for f in files if ".tpl" in f]
     return files
+
 
 def parse_notes_files(files: typing.List[str]) -> typing.List[Note]:
     entries = [Note.from_file(i) for i in files]
@@ -172,9 +182,9 @@ def parse_notes_files(files: typing.List[str]) -> typing.List[Note]:
             entry.parent = parent
     return entries
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     files = get_notes_files(["literature", "permanent"])
     parsed = parse_notes_files(files)
     for f in parsed:
         print(f.get_links())
-        
