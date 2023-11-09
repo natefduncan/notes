@@ -5,12 +5,25 @@ import subprocess
 import argparse
 from pathlib import Path
 import difflib
+import json
 
 from notes import get_notes_files, parse_notes_files, Note
 from graph import Graph
 
 TODO_RE = re.compile("TODO:(.+)|- \[ \](.+)")
 DUE_DATE_RE = re.compile("\((\d\d-\d\d-\d\d)\)")
+CONFIG_PATH = "config.json"
+
+def load_config():
+    if not os.path.exists(CONFIG_PATH):
+        return {}
+    with open(CONFIG_PATH, "r") as f:
+        config = json.loads(f.read())
+    return config
+
+def write_config(config):
+    with open(CONFIG_PATH, "w") as f:
+        f.write(json.dumps(config))
 
 def generate_node_index(graph: Graph, node: Note, level: int) -> str:
     output = ("  " * level) + \
@@ -46,8 +59,8 @@ def generate_index(graph: Graph):
     index += "NO TAG\n" + "".join(list(set(tagless)))
     return index
 
-def update_index():
-    os.chdir(Path("~/notes/wiki").expanduser())
+def update_index(config):
+    os.chdir(Path(config["path"]).expanduser())
     files = get_notes_files(["."])
     parsed = parse_notes_files(files)
     graph = Graph(parsed)
@@ -56,8 +69,8 @@ def update_index():
     with open(path, "w") as f:
         f.write(index)
 
-def update_todo(sort_date: bool):
-    os.chdir(Path("~/notes/wiki").expanduser())
+def update_todo(sort_date: bool, config):
+    os.chdir(Path(config["path"]).expanduser())
     files = get_notes_files(["."])
     parsed = parse_notes_files(files)
     items = {}
@@ -107,8 +120,8 @@ def update_todo(sort_date: bool):
     with open(path, "w") as f:
         f.write(output)
 
-def find_note_by_title(title: str) -> Note:
-    os.chdir(Path("~/notes/wiki").expanduser())
+def find_note_by_title(title: str, config) -> Note:
+    os.chdir(Path(config["path"]).expanduser())
     files = get_notes_files(["."])
     parsed = parse_notes_files(files)
     scores = [difflib.SequenceMatcher(None, args.title, i.title, False).ratio() 
@@ -117,93 +130,102 @@ def find_note_by_title(title: str) -> Note:
     return parsed[max_idx]
 
 def main(args):
-    if args.command == "update-index":
-        update_index()
+    if args.command == "set":
+        config = load_config()
+        config[args.key] = args.value
+        write_config(config)
 
-    elif args.command == "new":
-        os.chdir(Path("~/notes/wiki").expanduser())
-        _id = Note.get_new_id("~/notes/wiki")
-        path = f"{_id}.md"
-        body = args.body.read() if args.body else ""
-        title = args.title if args.title else "New Note"
-        template = args.template if args.template else None
-        tags = ["#" + i.strip() for i in args.tags.split(",")] if args.tags else []
-        new_note = Note(
-            path=path, 
-            _id=_id, 
-            title=title, 
-            tags=tags, 
-            template=template, 
-            body=body
-        )
-        if args.noeditor:
-            with open(path, "w") as f:
-                f.write(new_note.to_str())
-        else:
+    else:
+        config = load_config()
+        if "path" not in config:
+            raise ValueError("Path must be set in config file!")
+        elif args.command == "update-index":
+            update_index(config)
+
+        elif args.command == "new":
+            os.chdir(Path(config["path"]).expanduser())
+            _id = Note.get_new_id(config["path"])
+            path = f"{_id}.md"
+            body = args.body.read() if args.body else ""
+            title = args.title if args.title else "New Note"
+            template = args.template if args.template else None
+            tags = ["#" + i.strip() for i in args.tags.split(",")] if args.tags else []
+            new_note = Note(
+                path=path, 
+                _id=_id, 
+                title=title, 
+                tags=tags, 
+                template=template, 
+                body=body
+            )
+            if args.noeditor:
+                with open(path, "w") as f:
+                    f.write(new_note.to_str())
+            else:
+                subprocess.run(
+                    args=["nvim", "-", "-c", f":file {path}"], 
+                    cwd=Path(config["path"]).expanduser(), 
+                    input=bytes(new_note.to_str(), "utf-8")
+                )
+
+        elif args.command == "index":
+            update_index(config)
             subprocess.run(
-                args=["nvim", "-", "-c", f":file {path}"], 
-                cwd=Path("~/notes/wiki").expanduser(), 
-                input=bytes(new_note.to_str(), "utf-8")
+                args=["nvim", "index.md"], 
+                cwd=Path(config["path"]).expanduser()
             )
 
-    elif args.command == "index":
-        update_index()
-        subprocess.run(
-            args=["nvim", "index.md"], 
-            cwd=Path("~/notes/wiki").expanduser()
-        )
+        elif args.command == "todo":
+            update_todo(args.sort_date, config)
+            subprocess.run(
+                args=["nvim", "todo.md"], 
+                cwd=Path(config["path"]).expanduser()
+            )
+           
+        elif args.command == "search":
+            subprocess.run(
+                args=["nvim", "-", "-c", ":call feedkeys(\"\<c-f>\")"], 
+                cwd=Path(config["path"]).expanduser()
+            )
 
-    elif args.command == "todo":
-        update_todo(args.sort_date)
-        subprocess.run(
-            args=["nvim", "todo.md"], 
-            cwd=Path("~/notes/wiki").expanduser()
-        )
-       
-    elif args.command == "search":
-        subprocess.run(
-            args=["nvim", "-", "-c", ":call feedkeys(\"\<c-f>\")"], 
-            cwd=Path("~/notes/wiki").expanduser()
-        )
+        elif args.command == "graph":
+            os.chdir(Path(config["path"]).expanduser())
+            files = get_notes_files(["."])
+            parsed = parse_notes_files(files)
+            graph = Graph(parsed)
+            print(graph.as_dot(orient_tag=args.orient_tag))
 
-    elif args.command == "graph":
-        os.chdir(Path("~/notes/wiki").expanduser())
-        files = get_notes_files(["."])
-        parsed = parse_notes_files(files)
-        graph = Graph(parsed)
-        print(graph.as_dot(orient_tag=args.orient_tag))
+        elif args.command == "find":
+            note = find_note_by_title(args.title, config)
+            subprocess.run(
+                args=["nvim", note.path], 
+                cwd=Path(config["path"]).expanduser()
+            )
 
-    elif args.command == "find":
-        note = find_note_by_title(args.title)
-        subprocess.run(
-            args=["nvim", note.path], 
-            cwd=Path("~/notes/wiki").expanduser()
-        )
+        elif args.command == "append":
+            note = find_note_by_title(args.title, config)
+            body = args.file.read() if args.file else args.content
+            note.body += "\n" + body
+            with open(note.path, "w") as f:
+                f.write(note.to_str())
 
-    elif args.command == "append":
-        note = find_note_by_title(args.title)
-        body = args.file.read() if args.file else args.content
-        note.body += "\n" + body
-        with open(note.path, "w") as f:
-            f.write(note.to_str())
+        elif args.command == "last":
+            p = subprocess.run(
+                args=["nvim", "--headless", "-c", ":ol", "-c", ":q"], 
+                cwd=Path(config["path"]).expanduser(), 
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+            all_files = p.stdout.decode("utf-8").split("\n")
+            last_file = all_files[0].split(":")[1].strip()
+            subprocess.run(
+                args=["nvim", last_file], 
+                cwd=Path(config["path"]).expanduser()
+            )
 
-    elif args.command == "last":
-        p = subprocess.run(
-            args=["nvim", "--headless", "-c", ":ol", "-c", ":q"], 
-            cwd=Path("~/notes/wiki").expanduser(), 
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-        all_files = p.stdout.decode("utf-8").split("\n")
-        last_file = all_files[0].split(":")[1].strip()
-        subprocess.run(
-            args=["nvim", last_file], 
-            cwd=Path("~/notes/wiki").expanduser()
-        )
-
-    elif args.command == "cat":
-        note = find_note_by_title(args.title)
-        print(note.body)
+        elif args.command == "cat":
+            note = find_note_by_title(args.title, config)
+            print(note.body)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(
@@ -213,6 +235,11 @@ if __name__=="__main__":
     subparsers = parser.add_subparsers(dest="command", help='sub-command help')
     # Update index
     subparsers.add_parser('update-index', help='Update notes index')
+
+    # Set
+    s = subparsers.add_parser('set', help='Set config key/value')
+    s.add_argument('key', help='Set config key')
+    s.add_argument('value', help='Set config value')
 
     # New (import) note
     new_note = subparsers.add_parser('new', help='Create new note')
