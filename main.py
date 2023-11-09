@@ -6,14 +6,14 @@ import argparse
 from pathlib import Path
 import difflib
 import json
+import pathlib
 
 from notes import get_notes_files, parse_notes_files, Note
 from graph import Graph
 
 TODO_RE = re.compile("TODO:(.+)|- \[ \](.+)")
 DUE_DATE_RE = re.compile("\((\d\d-\d\d-\d\d)\)")
-CONFIG_PATH = "config.json"
-
+CONFIG_PATH = pathlib.Path(__file__).parent.resolve() / "config.json"
 
 def load_config():
     if not os.path.exists(CONFIG_PATH):
