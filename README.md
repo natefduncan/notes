@@ -2,7 +2,8 @@
 
 Note CLI on top of Neovim
 
-`usage: notes [-h]
+```
+usage: notes [-h]
              {update-index,set,new,index,todo,search,graph,find,append,last,cat} ...
 
 notes system
@@ -24,4 +25,4 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-`
+```
