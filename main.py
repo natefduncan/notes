@@ -201,6 +201,10 @@ def main(args):
             cwd=Path("~/notes/wiki").expanduser()
         )
 
+    elif args.command == "cat":
+        note = find_note_by_title(args.title)
+        print(note.body)
+
 if __name__=="__main__":
     parser = argparse.ArgumentParser(
         prog="notes", 
@@ -258,6 +262,11 @@ if __name__=="__main__":
     # Last
     last = subparsers.add_parser("last", \
             help = "Open up last file")
+
+    # Cat
+    cat = subparsers.add_parser("cat", \
+            help = "Cat note body to stdout")
+    cat.add_argument("title", type=str, help = "note title")
 
     args = parser.parse_args()
     main(args)
