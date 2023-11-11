@@ -13,7 +13,7 @@ from graph import Graph
 
 TODO_RE = re.compile("TODO:(.+)|- \[ \](.+)")
 DUE_DATE_RE = re.compile("\((\d\d-\d\d-\d\d)\)")
-NOTECARD_RE = re.compile("CARD\((.+)\):\n- FRONT:(.+)\n- BACK:(.+)")
+NOTECARD_RE = re.compile("CARD\((.+)\):\n- (.+)\n- (.+)")
 
 CONFIG_PATH = pathlib.Path(__file__).parent.resolve() / "config.json"
 
@@ -106,7 +106,7 @@ def update_notecard(config, anki_format):
         else:
             output += f"# {deck}\n\n"
             for front, back in cards:
-                output += f"- FRONT: {front}\n- BACK: {back}\n\n"
+                output += f"- {front}\n- {back}\n\n"
     outfile = "notecard.md" if not anki_format else "notecard.txt"
     path = (Path(config["path"]) / outfile).expanduser()
     with open(path, "w") as f:
