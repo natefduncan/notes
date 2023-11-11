@@ -13,6 +13,8 @@ from graph import Graph
 
 TODO_RE = re.compile("TODO:(.+)|- \[ \](.+)")
 DUE_DATE_RE = re.compile("\((\d\d-\d\d-\d\d)\)")
+NOTECARD_RE = re.compile("CARD\((.+)\):\n- FRONT:(.+)\n- BACK:(.+)")
+
 CONFIG_PATH = pathlib.Path(__file__).parent.resolve() / "config.json"
 
 def load_config():
@@ -69,10 +71,46 @@ def update_index(config):
     parsed = parse_notes_files(files)
     graph = Graph(parsed)
     index = generate_index(graph)
-    path = Path("~/notes/wiki/index.md").expanduser()
+    path = (Path(config["path"]) / "index.md").expanduser()
     with open(path, "w") as f:
         f.write(index)
 
+def update_notecard(config, anki_format):
+    os.chdir(Path(config["path"]).expanduser())
+    files = get_notes_files(["."])
+    parsed = parse_notes_files(files)
+    decks = {}
+    for p in parsed:
+        notecards = re.findall(NOTECARD_RE, p.body)
+        if notecards:
+            for notecard in notecards:
+                deck, front, back = notecard
+                if deck in decks:
+                    decks[deck].append((front, back))
+                else:
+                    decks[deck] = [(front, back)]
+    output = ""
+    for deck, cards in decks.items():
+        if anki_format:
+            output += "#separator:Comma\n"
+            output += "#html:false\n"
+            output += "#columns:front,back,deck,notetype\n"
+            output += "#deck column:3\n"
+            output += "#notetype column:4\n"
+
+            for front, back in cards:
+                deck_esc = deck.strip().replace("\"", "\"\"")
+                front_esc = front.strip().replace("\"", "\"\"")
+                back_esc = back.strip().replace("\"", "\"\"")
+                output += f"\"{front_esc}\",\"{back_esc}\",\"{deck_esc}\",Basic\n"
+        else:
+            output += f"# {deck}\n\n"
+            for front, back in cards:
+                output += f"- FRONT: {front}\n- BACK: {back}\n\n"
+    outfile = "notecard.md" if not anki_format else "notecard.txt"
+    path = (Path(config["path"]) / outfile).expanduser()
+    with open(path, "w") as f:
+        f.write(output)
 
 def update_todo(sort_date: bool, config):
     os.chdir(Path(config["path"]).expanduser())
@@ -122,7 +160,7 @@ def update_todo(sort_date: bool, config):
             for t in tasks:
                 output += f"- [ ] {t}\n"
             output += "\n"
-    path = Path("~/notes/wiki/todo.md").expanduser()
+    path = (Path(config["path"]) / "todo.md").expanduser()
     with open(path, "w") as f:
         f.write(output)
 
@@ -183,6 +221,13 @@ def main(args):
             update_todo(args.sort_date, config)
             subprocess.run(
                 args=["nvim", "todo.md"], cwd=Path(config["path"]).expanduser()
+            )
+
+        elif args.command == "notecard":
+            update_notecard(config, args.anki_format)
+            outfile = "notecard.md" if not args.anki_format else "notecard.txt"
+            subprocess.run(
+                args=["nvim", outfile], cwd=Path(config["path"]).expanduser()
             )
 
         elif args.command == "search":
@@ -264,9 +309,14 @@ if __name__ == "__main__":
     # Index
     subparsers.add_parser("index", help="Open index file")
 
-    # ToDo
-    todo = subparsers.add_parser("todo", help="Open todo file")
-    todo.add_argument("-d", "--sort-date", action="store_true", help="Sort by due date")
+    # todo
+    todo = subparsers.add_parser("todo", help="open todo file")
+    todo.add_argument("-d", "--sort-date", action="store_true", help="sort by due date")
+
+    # notecard
+    notecard = subparsers.add_parser("notecard", help="open notecard file")
+    notecard.add_argument("-a", "--anki-format", action="store_true", help="save notecards in format that can be uploaded to Anki")
+
     # Search
     subparsers.add_parser("search", help="Search note files")
 
