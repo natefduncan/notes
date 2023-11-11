@@ -2,6 +2,21 @@
 
 Note CLI on top of Neovim
 
+Todo:
+```
+- [ ] Example todo (%Y-%m-%d)
+TODO: Example todo
+```
+
+Notecard:
+```
+CARD(Deck):
+- Example Front
+- Example Back
+```
+
+## Usage
+
 ```
 usage: notes [-h] {set,new,index,todo,notecard,search,graph,find,append,last,cat,templates} ...
 
