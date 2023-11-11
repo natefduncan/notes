@@ -187,8 +187,6 @@ def main(args):
         config = load_config()
         if "path" not in config:
             raise ValueError("Path must be set in config file!")
-        elif args.command == "update-index":
-            update_index(config)
 
         elif args.command == "new":
             os.chdir(Path(config["path"]).expanduser())
@@ -277,8 +275,6 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="notes", description="notes system")
     subparsers = parser.add_subparsers(dest="command", help="sub-command help")
-    # Update index
-    subparsers.add_parser("update-index", help="Update notes index")
 
     # Set
     s = subparsers.add_parser("set", help="Set config key/value")
