@@ -271,6 +271,11 @@ def main(args):
             note = find_note_by_title(args.title, config)
             print(note.body)
 
+        elif args.command == "templates":
+            note_path = Path(config["path"]).expanduser()
+            files = [each for each in os.listdir(note_path) if each.endswith('.tpl')]
+            for f in files:
+                print(f)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="notes", description="notes system")
@@ -348,6 +353,9 @@ if __name__ == "__main__":
     # Cat
     cat = subparsers.add_parser("cat", help="Cat note body to stdout")
     cat.add_argument("title", type=str, help="note title")
+
+    # Templates
+    templates = subparsers.add_parser("templates", help="List available note templates")
 
     args = parser.parse_args()
     main(args)
