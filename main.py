@@ -90,14 +90,14 @@ def update_notecard(config, anki_format):
                 else:
                     decks[deck] = [(front, back)]
     output = ""
+    if anki_format:
+        output += "#separator:Comma\n"
+        output += "#html:false\n"
+        output += "#columns:front,back,deck,notetype\n"
+        output += "#deck column:3\n"
+        output += "#notetype column:4\n"
     for deck, cards in decks.items():
         if anki_format:
-            output += "#separator:Comma\n"
-            output += "#html:false\n"
-            output += "#columns:front,back,deck,notetype\n"
-            output += "#deck column:3\n"
-            output += "#notetype column:4\n"
-
             for front, back in cards:
                 deck_esc = deck.strip().replace("\"", "\"\"")
                 front_esc = front.strip().replace("\"", "\"\"")
