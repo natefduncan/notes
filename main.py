@@ -195,9 +195,10 @@ def main(args):
             body = args.body.read() if args.body else ""
             title = args.title if args.title else "New Note"
             template = args.template if args.template else None
+            kind = args.kind if args.kind else "note"
             tags = ["#" + i.strip() for i in args.tags.split(",")] if args.tags else []
             new_note = Note(
-                path=path, _id=_id, title=title, tags=tags, template=template, body=body
+                path=path, _id=_id, title=title, tags=tags, template=template, body=body, kind=kind, 
             )
             if args.noeditor:
                 with open(path, "w") as f:
@@ -305,6 +306,12 @@ if __name__ == "__main__":
         "--noeditor",
         action="store_true",
         help="Save note instead of opening editor",
+    )
+    new_note.add_argument(
+        "-k",
+        "--kind",
+        type=str, 
+        help="note type; default to 'note'",
     )
 
     # Index

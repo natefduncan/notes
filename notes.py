@@ -12,12 +12,14 @@ from tokens import tokenize
 LINK_RE = re.compile("\[.+\]\([^\(\)]+\)")
 TAG_RE = re.compile("(#[^ \n]+)")
 ID_RE = re.compile("id: (.+)\n")
+KIND_RE = re.compile("kind: (.+)\n")
 PARENT_RE = re.compile("parent: \[.+\]\((.+)\)\n")
 DEFAULT_TEMPLATE = """---
 id: %id
 date: %date
 tags: %tags
 parent: %parent
+kind: %kind
 --- 
 
 # %title
@@ -33,6 +35,7 @@ parent: %parent
 class Note:
     path: typing.Optional[str] = ""
     _id: str = ""
+    kind: typing.Optional[str] = "note"
     date: dt.date = dt.date.today()
     tags: typing.List[str] = field(default_factory=list)
     parent: typing.Optional[Note] | typing.Optional[str] = None
@@ -100,6 +103,8 @@ class Note:
             elif token.kind == "PARENT_HEADER":
                 parent = re.search(PARENT_RE, token.value)
                 c.parent = None if not parent else parent.group(1)
+            elif token.kind == "KIND_RE":
+                c.kind = re.search(KIND_RE, token.value).group(1)
             elif token.kind == "TITLE":
                 c.title = token.value.replace("# ", "").strip()
                 is_body = True
@@ -140,6 +145,7 @@ class Note:
             "%date": date,
             "%tags": tags,
             "%parent": parent,
+            "%kind": self.kind, 
             "%title": self.title,
             "%body": self.body,
             "%footer": self.footer,
