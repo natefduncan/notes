@@ -9,11 +9,11 @@ from dataclasses import dataclass, field
 
 from tokens import tokenize
 
-LINK_RE = re.compile("\[.+\]\([^\(\)]+\)")
-TAG_RE = re.compile("(#[^ \n]+)")
-ID_RE = re.compile("id: (.+)\n")
-KIND_RE = re.compile("kind: (.+)\n")
-PARENT_RE = re.compile("parent: \[.+\]\((.+)\)\n")
+LINK_RE = re.compile(r"\[.+\]\([^\(\)]+\)")
+TAG_RE = re.compile(r"(#[^ \n]+)")
+ID_RE = re.compile(r"id: (.+)\n")
+KIND_RE = re.compile(r"kind: (.+)\n")
+PARENT_RE = re.compile(r"parent: \[.+\]\((.+)\)\n")
 DEFAULT_TEMPLATE = """---
 id: %id
 date: %date

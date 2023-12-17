@@ -11,9 +11,9 @@ import pathlib
 from notes import get_notes_files, parse_notes_files, Note
 from graph import Graph
 
-TODO_RE = re.compile("TODO:(.+)|- \[ \](.+)")
-DUE_DATE_RE = re.compile("\((\d\d-\d\d-\d\d)\)")
-NOTECARD_RE = re.compile("CARD\((.+)\):\n- (.+)\n- (.+)")
+TODO_RE = re.compile(r"TODO:(.+)|- \[ \](.+)")
+DUE_DATE_RE = re.compile(r"\((\d\d-\d\d-\d\d)\)")
+NOTECARD_RE = re.compile(r"CARD\((.+)\):\n- (.+)\n- (.+)")
 
 CONFIG_PATH = pathlib.Path(__file__).parent.resolve() / "config.json"
 
@@ -231,7 +231,7 @@ def main(args):
 
         elif args.command == "search":
             subprocess.run(
-                args=["nvim", "-", "-c", ':call feedkeys("\<c-f>")'],
+                args=["nvim", "-", "-c", r':call feedkeys("\<c-f>")'],
                 cwd=Path(config["path"]).expanduser(),
             )
 
