@@ -278,6 +278,15 @@ def main(args):
             for f in files:
                 print(f)
 
+        elif args.command == "replace-section":
+            note = find_note_by_title(args.title, config)
+            if not args.replace_with:
+                raise ValueError("Set replace with -r")
+            replace_with = args.replace_with.read() 
+            note.replace_section(args.section, replace_with)
+            with open(note.path, "w") as f:
+                f.write(note.to_str())
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="notes", description="notes system")
     subparsers = parser.add_subparsers(dest="command", help="sub-command help")
@@ -363,6 +372,20 @@ if __name__ == "__main__":
 
     # Templates
     templates = subparsers.add_parser("templates", help="List available note templates")
+    # Replace Section 
+    replace_section = subparsers.add_parser("replace-section", help="Replace content of a note section")
+    replace_section.add_argument("title", type=str, help="note title")
+    replace_section.add_argument("section", type=str, help="note section")
+    replace_section.add_argument(
+        "-r",
+        "--replace-with",
+        type=argparse.FileType("r"),
+        help="text to replace section; can pipe from stdin or input from a file",
+        nargs="?",
+    )
+
+
+
 
     args = parser.parse_args()
     main(args)
