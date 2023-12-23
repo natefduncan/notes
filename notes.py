@@ -12,6 +12,8 @@ from tokens import tokenize
 LINK_RE = re.compile(r"\[.+\]\([^\(\)]+\)")
 TAG_RE = re.compile(r"(#[^ \n]+)")
 ID_RE = re.compile(r"id: (.+)\n")
+SECTION_RE = re.compile(r"## (.+)\n")
+SECTION_BODY_RE = re.compile(r"(?:## .+)\n\n([\s\S]*?)\n\n(?=^##|---)")
 KIND_RE = re.compile(r"kind: (.+)\n")
 PARENT_RE = re.compile(r"parent: \[.+\]\((.+)\)\n")
 DEFAULT_TEMPLATE = """---
@@ -52,6 +54,14 @@ class Note:
 
     def __hash__(self):
         return hash(self._id)
+
+    def get_section_headers(self) -> list[str]:
+        return re.findall(SECTION_RE, self.body)
+
+    def replace_section(self, section: str, replace_with: str):
+        section_body_re = rf"(?:## {section})\n\n([\s\S]*?)(?:\n\n)?(?=^##|---|\Z)"
+        r = re.search(section_body_re, self.body, re.MULTILINE).span(1)
+        self.body = self.body[:r[0]] + replace_with.strip() + self.body[r[1]:]
 
     def as_dot(self, orient_tag=False):
         output = ""
