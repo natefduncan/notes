@@ -16,10 +16,9 @@ from notes.graph import Graph
 TODO_RE = re.compile(r"TODO:(.+)|- \[ \](.+)")
 DUE_DATE_RE = re.compile(r"\((\d\d-\d\d-\d\d)\)")
 NOTECARD_RE = re.compile(r"CARD\((.+)\):\n- (.+)\n- (.+)")
-# CONFIG_PATH = pathlib.Path(__file__).parent.resolve() / "config.json"
-
-CONFIG_PATH = Path(os.path.expanduser('~')) / ".config" / "notes" / "config.json"
+CONFIG_PATH = Path(os.path.expanduser("~")) / ".config" / "notes" / "config.json"
 CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+
 
 def load_config():
     if not os.path.exists(CONFIG_PATH):
@@ -79,6 +78,7 @@ def update_index(notes_path: str):
     with open(path, "w") as f:
         f.write(index)
 
+
 def update_notecard(notes_path: str, anki_format: bool):
     os.chdir(Path(notes_path).expanduser())
     files = get_notes_files(["."])
@@ -103,10 +103,10 @@ def update_notecard(notes_path: str, anki_format: bool):
     for deck, cards in decks.items():
         if anki_format:
             for front, back in cards:
-                deck_esc = deck.strip().replace("\"", "\"\"")
-                front_esc = front.strip().replace("\"", "\"\"")
-                back_esc = back.strip().replace("\"", "\"\"")
-                output += f"\"{front_esc}\",\"{back_esc}\",\"{deck_esc}\",Basic\n"
+                deck_esc = deck.strip().replace('"', '""')
+                front_esc = front.strip().replace('"', '""')
+                back_esc = back.strip().replace('"', '""')
+                output += f'"{front_esc}","{back_esc}","{deck_esc}",Basic\n'
         else:
             output += f"# {deck}\n\n"
             for front, back in cards:
@@ -115,6 +115,7 @@ def update_notecard(notes_path: str, anki_format: bool):
     path = (Path(notes_path) / outfile).expanduser()
     with open(path, "w") as f:
         f.write(output)
+
 
 def update_todo(sort_date: bool, notes_path: str):
     os.chdir(Path(notes_path).expanduser())
@@ -174,17 +175,18 @@ def find_note_by_title(title: str, notes_path: str) -> Note:
     files = get_notes_files(["."])
     parsed = parse_notes_files(files)
     scores = [
-        difflib.SequenceMatcher(None, title, i.title, False).ratio()
-        for i in parsed
+        difflib.SequenceMatcher(None, title, i.title, False).ratio() for i in parsed
     ]
     max_idx = scores.index(max(scores))
     return parsed[max_idx]
+
 
 def get_notes_path(ctx: click.core.Context) -> str:
     if "path" not in ctx.obj["config"]:
         raise ValueError("Path must be set in config file!")
     else:
-        return ctx.obj["config"]["path"]  
+        return ctx.obj["config"]["path"]
+
 
 @click.group()
 @click.pass_context
@@ -193,6 +195,7 @@ def cli(ctx):
     ctx.ensure_object(dict)
     ctx.obj["config"] = config
 
+
 @cli.command(short_help="Set note directory")
 @click.argument("value", type=str)
 def set_note_path(value: str):
@@ -200,28 +203,41 @@ def set_note_path(value: str):
     config["path"] = value
     write_config(config)
 
+
 @cli.command(short_help="create new note")
 @click.option("-t", "--title", type=str, help="note title")
-@click.option("-b", "--body", type=click.File("r"), help="note body; can pipe from stdin or input from a file")
-@click.option("-g", "--tags", type=str, help="comma separated list of tags")
 @click.option(
-    "-f", "--template", type=str, help="new note from existing template"
+    "-b",
+    "--body",
+    type=click.File("r"),
+    help="note body; can pipe from stdin or input from a file",
 )
+@click.option("-g", "--tags", type=str, help="comma separated list of tags")
+@click.option("-f", "--template", type=str, help="new note from existing template")
 @click.option(
     "-n",
     "--noeditor",
-    is_flag=True, 
+    is_flag=True,
     help="Save note instead of opening editor",
 )
 @click.option(
     "-k",
     "--kind",
-    type=str, 
+    type=str,
     help="note type; default to 'note'",
 )
 @click.option("-p", "--path", type=str, help="overwite saved notes path")
 @click.pass_context
-def new(ctx, title: str, body: click.File, tags: str, template: str, noeditor: bool, kind: str, path: str):
+def new(
+    ctx,
+    title: Optional[str],
+    body: Optional[click.File],
+    tags: Optional[str],
+    template: Optional[str],
+    noeditor: Optional[bool],
+    kind: Optional[str],
+    path: Optional[str],
+):
     notes_path = get_notes_path(ctx)
     if path:
         os.chdir(Path(path).expanduser())
@@ -235,7 +251,13 @@ def new(ctx, title: str, body: click.File, tags: str, template: str, noeditor: b
     kind = kind if kind else "note"
     tags = ["#" + i.strip() for i in tags.split(",")] if tags else []
     new_note = Note(
-        path=path, _id=_id, title=title, tags=tags, template=template, body=body, kind=kind, 
+        path=path,
+        _id=_id,
+        title=title,
+        tags=tags,
+        template=template,
+        body=body,
+        kind=kind,
     )
     if noeditor:
         with open(path, "w") as f:
@@ -247,6 +269,7 @@ def new(ctx, title: str, body: click.File, tags: str, template: str, noeditor: b
             input=bytes(new_note.to_str(), "utf-8"),
         )
 
+
 @cli.command(short_help="Open index file")
 @click.pass_context
 def index(ctx):
@@ -254,15 +277,15 @@ def index(ctx):
     update_index(notes_path)
     subprocess.run(["nvim", "index.md"], cwd=Path(notes_path).expanduser())
 
+
 @cli.command(short_help="open todo file")
 @click.option("-d", "--sort-date", is_flag=True, help="sort by due date")
 @click.pass_context
 def todo(ctx, sort_date: bool):
     notes_path = get_notes_path(ctx)
     update_todo(sort_date, notes_path)
-    subprocess.run(
-        args=["nvim", "todo.md"], cwd=Path(notes_path).expanduser()
-    )
+    subprocess.run(args=["nvim", "todo.md"], cwd=Path(notes_path).expanduser())
+
 
 @cli.command(short_help="create notecard file")
 @click.option("-a", "--anki-format", is_flag=True, type=bool, help="anki format")
@@ -271,11 +294,9 @@ def notecard(ctx, anki_format: bool):
     notes_path = get_notes_path(ctx)
     update_notecard(notes_path, anki_format)
     outfile = "notecard.md" if not anki_format else "notecard.txt"
-    subprocess.run(
-        ["nvim", outfile], cwd=Path(notes_path).expanduser()
-    )
+    subprocess.run(["nvim", outfile], cwd=Path(notes_path).expanduser())
 
-    
+
 @cli.command(short_help="Search note files")
 @click.pass_context
 def search(ctx):
@@ -299,15 +320,15 @@ def graph(ctx, orient_tag: bool):
     graph = Graph(parsed)
     click.echo(graph.as_dot(orient_tag=orient_tag))
 
+
 @cli.command(short_help="Find note with most similar title and open")
 @click.argument("title", type=str)
 @click.pass_context
 def find(ctx, title: str):
     notes_path = get_notes_path(ctx)
     note = find_note_by_title(title, notes_path)
-    subprocess.run(
-        args=["nvim", note.path], cwd=Path(notes_path).expanduser()
-    )
+    subprocess.run(args=["nvim", note.path], cwd=Path(notes_path).expanduser())
+
 
 @cli.command(short_help="Add content to end of note body")
 @click.argument("title", type=str)
@@ -317,9 +338,7 @@ def find(ctx, title: str):
     type=click.File("r"),
     help="note body; can pipe from stdin or input from a file",
 )
-@click.option(
-    "-c", "--content", type=str, help="content to add to end of body"
-)
+@click.option("-c", "--content", type=str, help="content to add to end of body")
 @click.pass_context
 def append(ctx, title: str, file: Optional[click.File], content: Optional[str]):
     notes_path = get_notes_path(ctx)
@@ -328,6 +347,7 @@ def append(ctx, title: str, file: Optional[click.File], content: Optional[str]):
     note.body += "\n" + body
     with open(note.path, "w") as f:
         f.write(note.to_str())
+
 
 @cli.command(short_help="Open up last file")
 @click.pass_context
@@ -341,9 +361,8 @@ def last(ctx):
     )
     all_files = p.stdout.decode("utf-8").split("\n")
     last_file = all_files[0].split(":")[1].strip()
-    subprocess.run(
-        args=["nvim", last_file], cwd=Path(notes_path).expanduser()
-    )
+    subprocess.run(args=["nvim", last_file], cwd=Path(notes_path).expanduser())
+
 
 @cli.command(short_help="Cat note body to stdout")
 @click.argument("title", type=str)
@@ -353,14 +372,16 @@ def cat(ctx, title: str):
     note = find_note_by_title(title, notes_path)
     click.echo(note.body)
 
+
 @cli.command(short_help="List available note templates")
 @click.pass_context
 def templates(ctx):
     notes_path = get_notes_path(ctx)
     note_path = Path(notes_path).expanduser()
-    files = [each for each in os.listdir(note_path) if each.endswith('.tpl')]
+    files = [each for each in os.listdir(note_path) if each.endswith(".tpl")]
     for f in files:
         click.echo(f)
+
 
 @cli.command(short_help="Replace content of a note section")
 @click.argument("title", type=str)
@@ -377,10 +398,11 @@ def replace_section(ctx, title: str, section: str, replace_with: click.File):
     note = find_note_by_title(title, notes_path)
     if not replace_with:
         raise ValueError("Set replace with -r")
-    replace_with = replace_with.read() 
+    replace_with = replace_with.read()
     note.replace_section(section, replace_with)
     with open(note.path, "w") as f:
         f.write(note.to_str())
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     cli()

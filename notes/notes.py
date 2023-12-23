@@ -61,9 +61,15 @@ class Note:
     def replace_section(self, section: str, replace_with: str):
         section_body_re = rf"(?:## {section})([\s\S]*?)(?=^##|---|\Z)"
         r = re.search(section_body_re, self.body, re.MULTILINE)
-        if r: 
+        if r:
             r = r.span(1)
-            self.body = self.body[:r[0]] + "\n\n" + replace_with.strip() + "\n\n" + self.body[r[1]:]
+            self.body = (
+                self.body[: r[0]]
+                + "\n\n"
+                + replace_with.strip()
+                + "\n\n"
+                + self.body[r[1] :]
+            )
         else:
             raise ValueError(f"Couldn't find {section} in note")
 
@@ -159,7 +165,7 @@ class Note:
             "%date": date,
             "%tags": tags,
             "%parent": parent,
-            "%kind": self.kind, 
+            "%kind": self.kind,
             "%title": self.title,
             "%body": self.body,
             "%footer": self.footer,
@@ -172,6 +178,7 @@ class Note:
     def save(self):
         with open(self.path, "w") as f:
             f.write(self.to_str())
+
 
 def get_notes_files(folders: typing.List[str]) -> typing.List[str]:
     files = []
