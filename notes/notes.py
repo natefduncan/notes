@@ -59,9 +59,13 @@ class Note:
         return re.findall(SECTION_RE, self.body)
 
     def replace_section(self, section: str, replace_with: str):
-        section_body_re = rf"(?:## {section})\n\n([\s\S]*?)(?:\n\n)?(?=^##|---|\Z)"
-        r = re.search(section_body_re, self.body, re.MULTILINE).span(1)
-        self.body = self.body[:r[0]] + replace_with.strip() + self.body[r[1]:]
+        section_body_re = rf"(?:## {section})([\s\S]*?)(?=^##|---|\Z)"
+        r = re.search(section_body_re, self.body, re.MULTILINE)
+        if r: 
+            r = r.span(1)
+            self.body = self.body[:r[0]] + "\n\n" + replace_with.strip() + "\n\n" + self.body[r[1]:]
+        else:
+            raise ValueError(f"Couldn't find {section} in note")
 
     def as_dot(self, orient_tag=False):
         output = ""
