@@ -7,7 +7,7 @@ import typing
 import datetime as dt
 from dataclasses import dataclass, field
 
-from .tokens import tokenize
+from notes.tokens import tokenize
 
 LINK_RE = re.compile(r"\[.+\]\([^\(\)]+\)")
 TAG_RE = re.compile(r"(#[^ \n]+)")

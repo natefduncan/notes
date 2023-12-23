@@ -8,8 +8,8 @@ import difflib
 import json
 import pathlib
 
-from notes import get_notes_files, parse_notes_files, Note
-from graph import Graph
+from notes.notes import get_notes_files, parse_notes_files, Note
+from notes.graph import Graph
 
 TODO_RE = re.compile(r"TODO:(.+)|- \[ \](.+)")
 DUE_DATE_RE = re.compile(r"\((\d\d-\d\d-\d\d)\)")
@@ -177,7 +177,7 @@ def find_note_by_title(title: str, config) -> Note:
     return parsed[max_idx]
 
 
-def main(args):
+def run(args):
     if args.command == "set":
         config = load_config()
         config[args.key] = args.value
@@ -290,7 +290,7 @@ def main(args):
             with open(note.path, "w") as f:
                 f.write(note.to_str())
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(prog="notes", description="notes system")
     subparsers = parser.add_subparsers(dest="command", help="sub-command help")
 
@@ -388,8 +388,8 @@ if __name__ == "__main__":
         nargs="?",
     )
 
-
-
-
     args = parser.parse_args()
-    main(args)
+    run(args)
+
+if __name__=="__main__":
+    main()

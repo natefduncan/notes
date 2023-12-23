@@ -1,5 +1,5 @@
 import typing
-from .notes import Note
+from notes.notes import Note
 
 
 class Graph:
