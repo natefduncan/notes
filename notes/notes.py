@@ -113,7 +113,7 @@ class Note:
             elif token.kind == "PARENT_HEADER":
                 parent = re.search(PARENT_RE, token.value)
                 c.parent = None if not parent else parent.group(1)
-            elif token.kind == "KIND_RE":
+            elif token.kind == "KIND_HEADER":
                 c.kind = re.search(KIND_RE, token.value).group(1)
             elif token.kind == "TITLE":
                 c.title = token.value.replace("# ", "").strip()
@@ -165,6 +165,9 @@ class Note:
             output = output.replace(k, r)
         return output
 
+    def save(self):
+        with open(self.path, "w") as f:
+            f.write(self.to_str())
 
 def get_notes_files(folders: typing.List[str]) -> typing.List[str]:
     files = []

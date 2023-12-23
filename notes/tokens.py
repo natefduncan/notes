@@ -7,6 +7,7 @@ DATE_HEADER_RE = r"date: \d{2}-\d{2}-\d{2}\n"
 PARENT_HEADER_RE = r"parent: \[.+\]\((.+)\)\n"
 TITLE_RE = r"# (.+)\n"
 LINK_RE = r"\[.+\]\([^\(\)]+\)"
+KIND_RE = r"kind: (.+)\n"
 
 TOKENS = [
     ("FOOTER_LINE", r"----\n"),
@@ -15,6 +16,7 @@ TOKENS = [
     ("TAG_HEADER", TAG_HEADER_RE),
     ("DATE_HEADER", DATE_HEADER_RE),
     ("PARENT_HEADER", PARENT_HEADER_RE),
+    ("KIND_HEADER", KIND_RE),
     ("TITLE", TITLE_RE),
     ("LINK", LINK_RE),
     ("CR", r"\n"),
