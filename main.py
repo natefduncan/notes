@@ -189,7 +189,10 @@ def main(args):
             raise ValueError("Path must be set in config file!")
 
         elif args.command == "new":
-            os.chdir(Path(config["path"]).expanduser())
+            if args.path:
+                os.chdir(Path(args.path).expanduser())
+            else:
+                os.chdir(Path(config["path"]).expanduser())
             _id = Note.get_new_id(config["path"])
             path = f"{_id}.md"
             body = args.body.read() if args.body else ""
@@ -313,7 +316,8 @@ if __name__ == "__main__":
         type=str, 
         help="note type; default to 'note'",
     )
-
+    new_note.add_argument("-p", "--path", type=str, help="overwite saved notes path")
+    
     # Index
     subparsers.add_parser("index", help="Open index file")
 
