@@ -302,7 +302,12 @@ def notecard(ctx, anki_format: bool):
 def search(ctx):
     notes_path = get_notes_path(ctx)
     subprocess.run(
-        args=["nvim", "-", "-c", r':call feedkeys("\<c-f>")'],
+        args=[
+            "nvim",
+            "-",
+            "-c",
+            r':lua require("telescope.builtin").live_grep({glob_pattern={"!*refs/*", "!*scripts/*"}})',
+        ],
         cwd=Path(notes_path).expanduser(),
     )
 
