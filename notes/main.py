@@ -20,6 +20,10 @@ CONFIG_PATH = Path(os.path.expanduser("~")) / ".config" / "notes" / "config.json
 CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
+def create_refs_folder(notes_path, note_id):
+    os.makedirs(f"{notes_path}/refs", exist_ok=True)
+    os.makedirs(f"{notes_path}/refs/{note_id}", exist_ok=True)
+
 def load_config():
     if not os.path.exists(CONFIG_PATH):
         return {}
@@ -227,6 +231,7 @@ def set_note_path(value: str):
     help="note type; default to 'note'",
 )
 @click.option("-p", "--path", type=str, help="overwite saved notes path")
+@click.option("-r", "--refs", is_flag=True, type=bool, help="create reference folder in ./refs for image files")
 @click.pass_context
 def new(
     ctx,
@@ -237,6 +242,7 @@ def new(
     noeditor: Optional[bool],
     kind: Optional[str],
     path: Optional[str],
+    refs: Optional[bool],
 ):
     notes_path = get_notes_path(ctx)
     if path:
@@ -259,6 +265,8 @@ def new(
         body=body,
         kind=kind,
     )
+    if refs:
+        create_refs_folder("refs", _id)
     if noeditor:
         with open(path, "w") as f:
             f.write(new_note.to_str())
@@ -327,12 +335,16 @@ def graph(ctx, orient_tag: bool):
 
 
 @cli.command(short_help="Find note with most similar title and open")
+@click.option("-r", "--refs", is_flag=True, type=bool, help="create reference folder in refs for image files")
 @click.argument("title", type=str)
 @click.pass_context
-def find(ctx, title: str):
+def find(ctx, title: str, refs: bool):
     notes_path = get_notes_path(ctx)
     note = find_note_by_title(title, notes_path)
-    subprocess.run(args=["nvim", note.path], cwd=Path(notes_path).expanduser())
+    cwd = Path(notes_path).expanduser()
+    if refs:
+        create_refs_folder(cwd, note._id)
+    subprocess.run(args=["nvim", note.path], cwd=cwd)
 
 
 @cli.command(short_help="Add content to end of note body")

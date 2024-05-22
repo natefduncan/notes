@@ -8,7 +8,7 @@ def read_reqs():
 
 setup(
     name="notes",
-    version="0.1.0",
+    version="0.1.1",
     py_modules=["notes"],
     packages=find_packages(),
     install_requires=read_reqs(),
