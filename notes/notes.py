@@ -142,7 +142,7 @@ class Note:
 
     @classmethod
     def from_file(cls, file: str) -> Note:
-        with open(file, "r") as f:
+        with open(file, "r", encoding="utf8", errors='ignore') as f:
             content = f.read()
         note = cls.from_str(content)
         note.path = file
