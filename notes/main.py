@@ -266,7 +266,7 @@ def new(
         kind=kind,
     )
     if refs:
-        create_refs_folder("refs", _id)
+        create_refs_folder(".", _id)
     if noeditor:
         with open(path, "w") as f:
             f.write(new_note.to_str())
