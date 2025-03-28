@@ -208,8 +208,12 @@ def parse_notes_files(files: typing.List[str]) -> typing.List[Note]:
     # Add parent entries
     for entry in entries:
         if entry.parent:
-            parent = [i for i in entries if i._id == entry.parent][0]
-            entry.parent = parent
+            parent_list = [i for i in entries if i._id == entry.parent]
+            if not parent_list: # parent deleted?
+                entry.parent = None
+            else:
+                parent = [i for i in entries if i._id == entry.parent][0]
+                entry.parent = parent
     return entries
 
 
