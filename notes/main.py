@@ -376,7 +376,8 @@ def last(ctx):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
-    all_files = p.stdout.decode("utf-8").split("\n")
+    all_messages = p.stdout.decode("utf-8").split("\n") # output includes files among other msgs
+    all_files = [i for i in all_messages if ":" in i and i.split(":")[0].isdigit()]
     last_file = all_files[0].split(":")[1].strip()
     subprocess.run(args=["nvim", last_file], cwd=Path(notes_path).expanduser())
 
